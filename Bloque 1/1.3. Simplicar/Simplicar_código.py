@@ -1,35 +1,34 @@
-# Constantes semánticas para mejorar la intención del código
-DESC_ESTADO_1_TIPO_B = 0.9
-DESC_ESTADO_2_TIPO_B = 0.8
-SIN_DESCUENTO = 1.0
+# Constantes semánticas para evitar "números mágicos"
+DISCOUNT_B_S1 = 0.9
+DISCOUNT_S2 = 0.8
+STATUS_ACTIVE = 1
+STATUS_PENDING = 2
 
-def calcular_precio_total(datos, tipo, descuento_adicional=0):
-    total = 0
-    
-    for item in datos:
-        precio = item['p']
-        cantidad = item['q']
-        estado = item['s']
-        subtotal_base = precio * cantidad
+def p(d, t, dc=0):
+    r = 0
+    for i in d:
+        price_base = i['p'] * i['q']
+        
+        # Guard Clauses & Early Returns (dentro del flujo del loop)
+        if t == 'A':
+            if i['s'] == STATUS_ACTIVE:
+                r += price_base
+            continue # Saltamos a la siguiente iteración
 
-        # Cláusula de guarda para Tipo A
-        if tipo == 'A':
-            if estado == 1:
-                total += subtotal_base
-            continue # Early continue: salta a la siguiente iteración
-
-        # Cláusula de guarda para Tipo B
-        if tipo == 'B':
-            if estado == 1:
-                total += subtotal_base * DESC_ESTADO_1_TIPO_B
-            elif estado == 2:
-                total += subtotal_base * DESC_ESTADO_2_TIPO_B
-            else:
-                total += subtotal_base
+        if t == 'B':
+            if i['s'] == STATUS_ACTIVE:
+                r += price_base * DISCOUNT_B_S1
             continue
 
-    # Lógica final fuera del bucle
-    if descuento_adicional > 0:
-        total -= descuento_adicional
+        if i['s'] == STATUS_PENDING:
+            r += price_base * DISCOUNT_S2
+            continue
+
+        # Caso por defecto (el 'else' original)
+        r += price_base
+
+    # Aplicar descuento global al final
+    if dc > 0:
+        r -= (r * dc / 100)
         
-    return total
+    return r

@@ -1,38 +1,37 @@
-def obtener_subtotal_item(item):
-    """Calcula el precio base de un item (precio * cantidad)."""
+def calcular_subtotal_item(item):
+    """Responsabilidad: Calcular el precio base (precio * cantidad) de un producto."""
     return item['p'] * item['q']
 
-def calcular_precio_con_descuento_estado(item):
-    """Aplica descuentos basados en el estado ('s') del item."""
-    subtotal = obtener_subtotal_item(item)
-    
-    # Mapeo de descuentos por estado para evitar if/else anidados
-    descuentos = {1: 0.9, 2: 0.8}
-    multiplicador = descuentos.get(item['s'], 1.0)
-    
-    return subtotal * multiplicador
+def obtener_precio_ajustado(item, tipo_cliente):
+    """Responsabilidad: Aplicar reglas de negocio según el tipo de cliente y estado del producto."""
+    subtotal = calcular_subtotal_item(item)
+    estado = item['s']
 
-def calcular_monto_por_tipo(item, tipo_cliente):
-    """Aplica la lógica de negocio específica según el tipo de cliente."""
+    # Lógica para Cliente Tipo A
     if tipo_cliente == 'A':
-        # Tipo A solo suma si el estado es 1
-        return obtener_subtotal_item(item) if item['s'] == 1 else 0
+        return subtotal if estado == 1 else 0
     
+    # Lógica para Cliente Tipo B (aplica descuentos del 10% o 20% según estado)
     if tipo_cliente == 'B':
-        # Tipo B tiene lógica de descuentos por estado
-        return calcular_precio_con_descuento_estado(item)
-    
-    # Caso por defecto (el 'else' del código original)
-    return obtener_subtotal_item(item)
+        if estado == 1:
+            return subtotal * 0.9
+        if estado == 2:
+            return subtotal * 0.8
+        return 0
+            
+    # Caso por defecto
+    return subtotal
 
-def calcular_total_pedido(datos, tipo_cliente, descuento_total=0):
+def aplicar_descuento_global(total_acumulado, porcentaje_descuento):
+    """Responsabilidad: Aplicar el descuento final al monto total calculado."""
+    if porcentaje_descuento > 0:
+        return total_acumulado * (1 - porcentaje_descuento / 100)
+    return total_acumulado
+
+def procesar_total_pedido(lista_items, tipo_cliente, descuento_total=0):
     """
-    Función principal que orquesta el cálculo total.
+    Responsabilidad: Orquestar el cálculo sumando cada ítem y aplicando el descuento final.
     Sustituye a la función original p(d, t, dc).
     """
-    total = sum(calcular_monto_por_tipo(item, tipo_cliente) for item in datos)
-    
-    if descuento_total > 0:
-        total -= descuento_total
-        
-    return total
+    total = sum(obtener_precio_ajustado(item, tipo_cliente) for item in lista_items)
+    return aplicar_descuento_global(total, descuento_total)
